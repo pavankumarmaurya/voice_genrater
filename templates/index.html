@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI YouTube Voice Generator</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0fdf4; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #166534; }
+        p.subtitle { text-align: center; color: #4b5563; margin-bottom: 25px; }
+        textarea { width: 100%; box-sizing: border-box; height: 250px; padding: 15px; font-size: 16px; border: 2px solid #bbf7d0; border-radius: 8px; resize: vertical; margin-bottom: 20px; }
+        textarea:focus { outline: none; border-color: #22c55e; }
+        .btn-container { text-align: center; }
+        button { background-color: #16a34a; color: white; border: none; padding: 14px 28px; font-size: 18px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background-color: #15803d; }
+        button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        
+        #loading { display: none; text-align: center; margin-top: 20px; font-size: 18px; color: #b45309; font-weight: bold; }
+        #result { margin-top: 30px; display: none; text-align: center; padding: 20px; background-color: #f3f4f6; border-radius: 8px; }
+        audio { width: 100%; margin-bottom: 20px; outline: none; }
+        .download-btn { background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; }
+        .download-btn:hover { background-color: #1d4ed8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ YouTube Voice Generator</h1>
+        <p class="subtitle">अपनी यूट्यूब स्क्रिप्ट नीचे बॉक्स में पेस्ट करें। (आराम से रुकने के लिए कॉमा (,) या पूर्ण विराम (।) का इस्तेमाल करें)</p>
+        
+        <form id="ttsForm">
+            <textarea id="scriptText" placeholder="अपनी हिंदी स्क्रिप्ट यहाँ लिखें या पेस्ट करें..."></textarea>
+            <div class="btn-container">
+                <button type="submit" id="generateBtn">आवाज़ जनरेट करें (Generate Voice)</button>
+            </div>
+        </form>
+
+        <!-- लोडिंग मैसेज -->
+        <div id="loading">⏳ आपकी आवाज़ तैयार हो रही है... कृपया प्रतीक्षा करें...</div>
+
+        <!-- रिजल्ट और डाउनलोड लिंक -->
+        <div id="result">
+            <h3 style="color: #166534; margin-top: 0;">🎉 आपकी आवाज़ तैयार है!</h3>
+            <audio id="audioPlayer" controls>
+                <source src="" type="audio/mpeg">
+                आपका ब्राउज़र ऑडियो सपोर्ट नहीं करता।
+            </audio>
+            <br>
+            <a id="downloadLink" href="" download="youtube_voice.mp3" class="download-btn">⬇️ MP3 डाउनलोड करें</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('ttsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const text = document.getElementById('scriptText').value;
+            if (!text.trim()) {
+                alert('कृपया बॉक्स में कुछ स्क्रिप्ट पेस्ट करें!');
+                return;
+            }
+
+            const generateBtn = document.getElementById('generateBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const audioPlayer = document.getElementById('audioPlayer');
+            const downloadLink = document.getElementById('downloadLink');
+
+            // बटन बंद करें और लोडिंग दिखाएं
+            generateBtn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('text', text);
+
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.audio_url) {
+                    // ऑडियो प्लेयर और डाउनलोड लिंक में फाइल सेट करें
+                    audioPlayer.src = data.audio_url;
+                    downloadLink.href = data.audio_url;
+                    
+                    // रिजल्ट दिखाएं
+                    loading.style.display = 'none';
+                    result.style.display = 'block';
+                } else {
+                    alert('कुछ गलती हो गई, कृपया दोबारा कोशिश करें।');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('सर्वर से कनेक्ट करने में समस्या हुई।');
+            } finally {
+                generateBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
